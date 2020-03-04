@@ -45,6 +45,7 @@ for xes_file, json_file in tqdm(list(zip(xes_files, json_files))):
     event_log.save_json(os.path.join(EVENTLOG_DIR, json_file))
 
 
+#Add anomalies
 
 np.random.seed(0)  # This will ensure reproducibility
 ps = [0.3]
@@ -81,6 +82,10 @@ for event_log_path, p in tqdm(combinations, desc='Add anomalies'):
             NoneAnomaly().apply_to_case(case)
 
     event_log.save_json(str(EVENTLOG_DIR / f'{event_log_file.model}-{p}-{event_log_file.id}.json.gz'))
+
+    
+    
+#Transform json to csv format
 
 import gzip
 import json
