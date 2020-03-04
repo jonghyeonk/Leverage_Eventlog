@@ -1,86 +1,28 @@
-import os
-import itertools
 from tqdm import tqdm
 
-from april.fs import BPIC_DIR
-from april.fs import EVENTLOG_DIR
-from april.fs import EventLogFile
-from april.fs import get_event_log_files
-from april.generation import CategoricalAttributeGenerator
+from april.fs import get_process_model_files
 from april.generation.anomaly import *
-from april.processmining.log import EventLog
+from april.generation.utils import generate_for_process_model
 
-xes_files = [
-    'BPIC19.xes.gz',
-    'BPIC13_closed_problems.xes.gz',
-    'BPIC13_open_problems.xes.gz',
-    'BPIC13_incidents.xes.gz',
-    'BPIC15_1.xes.gz',
-    'BPIC15_2.xes.gz',
-    'BPIC15_3.xes.gz',
-    'BPIC15_4.xes.gz'
-    'BPIC15_5.xes.gz',
-    'BPIC12.xes.gz',
-    'BPIC17.xes.gz',
-    'BPIC17_offer_log.xes.gz'
+
+#Define anomalies
+
+anomalies = [
+    SkipSequenceAnomaly(max_sequence_size=2),
+    ReworkAnomaly(max_distance=5, max_sequence_size=3),
+    EarlyAnomaly(max_distance=5, max_sequence_size=2),
+    LateAnomaly(max_distance=5, max_sequence_size=2),
+    InsertAnomaly(max_inserts=2)
 ]
 
-json_files = [
-    'bpic19-0.0-0.json.gz',
-    'bpic13-0.0-1.json.gz',
-    'bpic13-0.0-2.json.gz',
-    'bpic13-0.0-3.json.gz',
-    'bpic15-0.0-1.json.gz',
-    'bpic15-0.0-2.json.gz',
-    'bpic15-0.0-3.json.gz',
-    'bpic15-0.0-4.json.gz',
-    'bpic15-0.0-5.json.gz',
-    'bpic12-0.0-0.json.gz',
-    'bpic17-0.0-1.json.gz',
-    'bpic17-0.0-2.json.gz'
-]
+#Generate Datasets
 
-for xes_file, json_file in tqdm(list(zip(xes_files, json_files))):
-    event_log = EventLog.from_xes(os.path.join(BPIC_DIR, xes_file))
-    event_log.save_json(os.path.join(EVENTLOG_DIR, json_file))
+process_models = [m for m in get_process_model_files() if 'testing' not in m and 'paper' not in m]
+for process_model in tqdm(process_models, desc='Generate'):
+    generate_for_process_model(process_model, size=5000, anomalies=anomalies, num_attr=[0, 0,0,0,0, 0,0,0,0,0], seed=1337)
 
-
-
-np.random.seed(0)  # This will ensure reproducibility
-ps = [0.3]
-event_log_paths = [e.path for e in get_event_log_files(EVENTLOG_DIR) if 'bpic' in e.name and e.p == 0.0]
-
-combinations = list(itertools.product(event_log_paths, ps))
-for event_log_path, p in tqdm(combinations, desc='Add anomalies'):
-    event_log_file = EventLogFile(event_log_path)
-    event_log = EventLog.from_json(event_log_path)
-
-    anomalies = [
-        SkipSequenceAnomaly(max_sequence_size=2),
-        ReworkAnomaly(max_distance=5, max_sequence_size=3),
-        EarlyAnomaly(max_distance=5, max_sequence_size=2),
-        LateAnomaly(max_distance=5, max_sequence_size=2),
-        InsertAnomaly(max_inserts=2)
-    ]
-
-#     if event_log.num_event_attributes > 0:
-#         anomalies.append(AttributeAnomaly(max_events=3, max_attributes=min(2, event_log.num_activities)))
-
-    for anomaly in anomalies:
-        # This is necessary to initialize the likelihood graph correctly
-        anomaly.activities = event_log.unique_activities
-#         anomaly.attributes = [CategoricalAttributeGenerator(name=name, values=values) for name, values in
-                           #   event_log.unique_attribute_values.items() if name != 'name']
-
-    for case in tqdm(event_log):
-        if np.random.uniform(0, 1) <= p:
-            anomaly = np.random.choice(anomalies)
-            anomaly.apply_to_case(case)
-           # print(dict(a.name, f'Random {a.name} {np.random.randint(1, len(a.values))}') for a in case.attributes)
-        else:
-            NoneAnomaly().apply_to_case(case)
-
-    event_log.save_json(str(EVENTLOG_DIR / f'{event_log_file.model}-{p}-{event_log_file.id}.json.gz'))
+    
+#Transform json to csv format
 
 import gzip
 import json
@@ -89,33 +31,108 @@ import os
 from april.fs import EVENTLOG_DIR
 
 json_files = [
-    'bpic19-0.0-0.json.gz',
-    'bpic13-0.0-1.json.gz',
-    'bpic13-0.0-2.json.gz',
-    'bpic13-0.0-3.json.gz',
-    'bpic15-0.0-1.json.gz',
-    'bpic15-0.0-2.json.gz',
-    'bpic15-0.0-3.json.gz',
-    'bpic15-0.0-4.json.gz',
-    'bpic15-0.0-5.json.gz',
-    'bpic12-0.0-0.json.gz',
-    'bpic17-0.0-1.json.gz',
-    'bpic17-0.0-2.json.gz'
+    'huge-0.3-1.json.gz',
+    'large-0.3-1.json.gz',
+    'medium-0.3-1.json.gz',
+    'small-0.3-1.json.gz',
+    'wide-0.3-1.json.gz',
+    'huge-0.3-2.json.gz',
+    'large-0.3-2.json.gz',
+    'medium-0.3-2.json.gz',
+    'small-0.3-2.json.gz',
+    'wide-0.3-2.json.gz',
+    'huge-0.3-3.json.gz',
+    'large-0.3-3.json.gz',
+    'medium-0.3-3.json.gz',
+    'small-0.3-3.json.gz',
+    'wide-0.3-3.json.gz',
+    'huge-0.3-4.json.gz',
+    'large-0.3-4.json.gz',
+    'medium-0.3-4.json.gz',
+    'small-0.3-4.json.gz',
+    'wide-0.3-4.json.gz',
+    'huge-0.3-5.json.gz',
+    'large-0.3-5.json.gz',
+    'medium-0.3-5.json.gz',
+    'small-0.3-5.json.gz',
+    'wide-0.3-5.json.gz',
+    'huge-0.3-6.json.gz',
+    'large-0.3-6.json.gz',
+    'medium-0.3-6.json.gz',
+    'small-0.3-6.json.gz',
+    'wide-0.3-6.json.gz',
+    'huge-0.3-7.json.gz',
+    'large-0.3-7.json.gz',
+    'medium-0.3-7.json.gz',
+    'small-0.3-7.json.gz',
+    'wide-0.3-7.json.gz',
+    'huge-0.3-8.json.gz',
+    'large-0.3-8.json.gz',
+    'medium-0.3-8.json.gz',
+    'small-0.3-8.json.gz',
+    'wide-0.3-8.json.gz',
+    'huge-0.3-9.json.gz',
+    'large-0.3-9.json.gz',
+    'medium-0.3-9.json.gz',
+    'small-0.3-9.json.gz',
+    'wide-0.3-9.json.gz',
+    'huge-0.3-10.json.gz',
+    'large-0.3-10.json.gz',
+    'medium-0.3-10.json.gz',
+    'small-0.3-10.json.gz',
+    'wide-0.3-10.json.gz'
 ]
-
 csv_files = [
-    'bpic19-0.0-0.csv',
-    'bpic13-0.0-1.csv',
-    'bpic13-0.0-2.csv',
-    'bpic13-0.0-3.csv',
-    'bpic15-0.0-1.csv',
-    'bpic15-0.0-2.csv',
-    'bpic15-0.0-3.csv',
-    'bpic15-0.0-4.csv',
-    'bpic15-0.0-5.csv',
-    'bpic12-0.0-0.csv',
-    'bpic17-0.0-1.csv',
-    'bpic17-0.0-2.csv'
+    'huge-0.3-1.csv',
+    'large-0.3-1.csv',
+    'medium-0.3-1.csv',
+    'small-0.3-1.csv',
+    'wide-0.3-1.csv',
+    'huge-0.3-2.csv',
+    'large-0.3-2.csv',
+    'medium-0.3-2.csv',
+    'small-0.3-2.csv',
+    'wide-0.3-2.csv',
+    'huge-0.3-3.csv',
+    'large-0.3-3.csv',
+    'medium-0.3-3.csv',
+    'small-0.3-3.csv',
+    'wide-0.3-3.csv',
+    'huge-0.3-4.csv',
+    'large-0.3-4.csv',
+    'medium-0.3-4.csv',
+    'small-0.3-4.csv',
+    'wide-0.3-4.csv',
+    'huge-0.3-5.csv',
+    'large-0.3-5.csv',
+    'medium-0.3-5.csv',
+    'small-0.3-5.csv',
+    'wide-0.3-5.csv',
+    'huge-0.3-6.csv',
+    'large-0.3-6.csv',
+    'medium-0.3-6.csv',
+    'small-0.3-6.csv',
+    'wide-0.3-6.csv',
+    'huge-0.3-7.csv',
+    'large-0.3-7.csv',
+    'medium-0.3-7.csv',
+    'small-0.3-7.csv',
+    'wide-0.3-7.csv',
+    'huge-0.3-8.csv',
+    'large-0.3-8.csv',
+    'medium-0.3-8.csv',
+    'small-0.3-8.csv',
+    'wide-0.3-8.csv',
+    'huge-0.3-9.csv',
+    'large-0.3-9.csv',
+    'medium-0.3-9.csv',
+    'small-0.3-9.csv',
+    'wide-0.3-9.csv',
+    'huge-0.3-10.csv',
+    'large-0.3-10.csv',
+    'medium-0.3-10.csv',
+    'small-0.3-10.csv',
+    'wide-0.3-10.csv'
 ]
 for json_file, csv_file in tqdm(list(zip(json_files, csv_files))):
     with gzip.GzipFile(os.path.join(EVENTLOG_DIR, json_file), 'r') as fin:    # 4. gzip
@@ -131,4 +148,4 @@ for json_file, csv_file in tqdm(list(zip(json_files, csv_files))):
             event = pd.DataFrame([{'order':pos,**case['attributes'],'caseid':case['id'], 'name':e['name'], 'timestamp':e['timestamp']}])
             df=df.append(event, ignore_index=True)
     df.to_csv(os.path.join(EVENTLOG_DIR, csv_file) ,index=False)
-
+    
