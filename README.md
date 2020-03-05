@@ -1,5 +1,5 @@
 # Information Measure based Anomaly detection using Adjusted Leverage
-This repository shows the developed algorithm of adjected leverage for event log and baseline models including Sampling, Naive, OC-SVM, DAE, BINET refered from [2].
+This repository shows the developed algorithm of adjected leverage score and anomaly detection for event log and the folder "BINET_tnolle" is refered from "https://github.com/tnolle/binet" to show baseline models including Sampling, Naive, OC-SVM, DAE, BINET refered from [2].
 The algorithm of adjected leverage is coded using statistical package R and calculate anomaly score of each case in trace level. 
 The total performance result was recored in table.csv file.
 
