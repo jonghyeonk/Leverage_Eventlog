@@ -17,7 +17,7 @@ About anomaly patterns, we injected all 6 types of anomaly patterns including "r
 The statistics of datasets are summarised in "data_stat.csv" file
 (In 'Leverage_Ko' folder, two datasets (bpic17, bpic19) are uploaded as zip file. In order to implement R code, you have to first decompress the zip files.)
 
-&#x1F53A; Changes from original code
+&#x1F53A; Changes from original code in BINet
 - We don't use generator to add artificial attributes because of our purpose of trace-level approach.
 - In real-life logs, we deleted all other attributes without 'caseid', 'activity', 'timestamp' since we focus on trace-level anomaly detection. In case of some baseline methods like SVM, we found that the methods use the additional attributes for classfication problem but it should be deleted for fair comparison.
 - Since we found an error in a function that automatically recognizes key atrributes on BPIC 2015 dataset, we adjusteed the activity name to be 'activityNameEN' from 'actioncode'.   
