@@ -17,6 +17,7 @@ About anomaly patterns, we injected all 6 types of anomaly patterns including "r
 The statistics of datasets are summarised in "data_stat.csv" file
 (In 'Leverage_Ko' folder, two datasets (bpic17, bpic19) are uploaded as zip file. In order to implement R code, you have to first decompress the zip files.)
 
+&#x1F53A;
 
 ## References
 [1] Nguyen, H. T. C., Lee, S., Kim, J., Ko, J., & Comuzzi, M. (2019). Autoencoders for improving quality of process event logs. Expert Systems with Applications, 131, 132-147.
