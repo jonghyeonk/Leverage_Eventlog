@@ -1,7 +1,7 @@
 # Information Measure based Anomaly detection using Adjusted Leverage
 This repository shows developed algorithm of adjected leverage score and anomaly detection for event log, and a folder "BINET_tnolle" is refered from "https://github.com/tnolle/binet" to show baseline models including Sampling, Naive, OC-SVM, DAE, BINET refered from [2].
-The algorithm of adjected leverage is coded using statistical package R as seen in folder "Leverage_Ko" and it calculateS anomaly score of each case in trace level. 
-The total performance result was recored in "table.csv" file.
+The algorithm of adjected leverage is coded using statistical package R as seen in folder "Leverage_Ko" and it calculates anomaly score for each case in trace level. 
+The result of performance was recorded in "table.csv" file.
 
 
 ## Prepared Data1 - 70 artifical logs
@@ -15,6 +15,14 @@ For real-life logs, we used BPI challenge 2012, 2013, 2015, 2017, 2019 data sets
 About anomaly patterns, we injected all 6 types of anomaly patterns including "replace", "insert", "skip", "early", "late", and "rework" on real-life logs.
 
 The statistics of datasets are summarised in "data_stat.csv" file
+(In 'Leverage_Ko' folder, two datasets (bpic17, bpic19) are uploaded as zip file. In order to implement R code, you have to first decompress the zip files.)
+
+&#x1F53A; Changes from original code in BINet
+- We don't use generator to add artificial attributes because of our purpose of trace-level approach.
+- In real-life logs, we deleted all the other attributes without 'caseid', 'activity', 'timestamp' since we focus on trace-level anomaly detection. In cases of some baseline methods equiped in BINet folder like SVM, we found that the methods use the additional attributes for classfication problem but it should be deleted for fair comparison.
+- Since we found an error in a function that automatically recognizes key atrributes on BPIC 2015 dataset, we adjusted the activity name to be 'activityNameEN' from 'action_code'. (Official data repository "https://data.4tu.nl/repository/uuid:31a308ef-c844-48da-948c-305d167a0ec1" introduces activity name as 'activityNameEn' or 'activityNameNL'.   
+- There are a few small changes in preprocessing parts of code for a need that some code should be adjusted from the above changes.
+
 
 ## References
 [1] Nguyen, H. T. C., Lee, S., Kim, J., Ko, J., & Comuzzi, M. (2019). Autoencoders for improving quality of process event logs. Expert Systems with Applications, 131, 132-147.
