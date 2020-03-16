@@ -40,21 +40,31 @@ class Binarizer(object):
         if self.mask_.shape != self.result.scores.shape:
             if len(self.mask_) != len(self.result.scores.shape):
                 self.mask_ = np.expand_dims(self.mask_, axis=-1)
+              
             self.mask_ = np.repeat(self.mask_, self.result.scores.shape[-1], axis=-1)
 
         self.targets = None
 
         if self._targets is not None:
-            self.targets = dict((a, self.mask(label_collapse(self._targets, axis=a))) for a in [0, 1, 2])
+            self.targets2 = dict((a, self.mask( label_collapse(self._targets, axis=a))    )  for a in [0, 1 ] ) 
+            self.targets3 = self.mask2( label_collapse(self._targets, axis=2))
+            self.targets2[2] = self.targets3
+            self.targets = self.targets2
 
+            
     def mask(self, a):
         if len(a.shape) == 1:
             m = self.mask_[:, 0, 0]
         elif len(a.shape) == 2:
             m = self.mask_[:, :, 0]
         else:
-            m = self.mask_
+            m =  self.mask_
         return np.ma.array(a, mask=m)
+
+
+    def mask2(self, a):
+        m =  self.mask_
+        return np.ma.array(a[:, :, 0:1], mask=m)
 
     def get_targets(self, axis=2):
         return self.targets.get(axis)
