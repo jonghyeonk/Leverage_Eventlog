@@ -361,8 +361,8 @@ class Dataset(object):
                     # Get attribute value from event log
                     if attribute == 'name':
                         attr = event.name
-                    elif attribute in include_attributes:
-                        attr = event.attributes[attribute]
+                    # elif attribute in include_attributes:
+                    #     attr = event.attributes[attribute]
                     else:
                         # Ignore the attribute name because its not part of included_attributes
                         continue
