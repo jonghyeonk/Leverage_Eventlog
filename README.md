@@ -16,7 +16,7 @@ About anomaly patterns, we injected all 6 types of anomaly patterns including "r
 
 The statistics of datasets are summarised in Table 1 in our paper.
 
-R-files
+## R-files
 - Preprocessing.R : Apply one hot encoding and zero-padding and save
 - adjusted_leverage.R : The code includes all 5 types of thresholds applied on basic leverage and weighted leverage.
 
