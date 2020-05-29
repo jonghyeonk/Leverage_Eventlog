@@ -15,7 +15,10 @@ For real-life logs, we used BPI challenge 2012, 2013, 2017 data sets. For each l
 About anomaly patterns, we injected all 6 types of anomaly patterns including "replace", "insert", "skip", "early", "late", and "rework" on real-life logs.
 
 The statistics of datasets are summarised in Table 1 in our paper.
-(In 'Leverage_Ko' folder, two datasets (bpic17) are uploaded as zip file because of data size limit. In order to implement R code, you have to first decompress the zip files.)
+
+R-files
+- Preprocessing.R : Apply one hot encoding and zero-padding and save
+- adjusted_leverage.R : The code includes all 5 types of thresholds applied on basic leverage and weighted leverage.
 
 &#x1F53A; Changes from original code in BINet
 - We don't use generator to add artificial attributes because of our purpose of trace-level approach.
