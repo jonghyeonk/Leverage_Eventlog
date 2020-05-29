@@ -1,7 +1,7 @@
 # Information Measure based Anomaly detection using Adjusted Leverage
 This repository shows developed algorithm of adjected leverage score and anomaly detection for event log, and a folder "BINET_tnolle" is refered from "https://github.com/tnolle/binet" to show baseline models including Sampling, Naive, OC-SVM, DAE, BINET refered from [2].
 The algorithm of adjected leverage is coded using statistical package R as seen in folder "Leverage_Ko" and it calculates anomaly score for each case in trace level. 
-The result of performance was recorded in "table.csv" file.
+The total result of performance was recorded in "table.csv" file.
 
 
 ## Prepared Data1 - 70 artifical logs
@@ -14,8 +14,8 @@ For real-life logs, we used BPI challenge 2012, 2013, 2017 data sets. For each l
 
 About anomaly patterns, we injected all 6 types of anomaly patterns including "replace", "insert", "skip", "early", "late", and "rework" on real-life logs.
 
-The statistics of datasets are summarised in "data_stat.csv" file
-(In 'Leverage_Ko' folder, two datasets (bpic17, bpic19) are uploaded as zip file. In order to implement R code, you have to first decompress the zip files.)
+The statistics of datasets are summarised in Table 1 in our paper.
+(In 'Leverage_Ko' folder, two datasets (bpic17) are uploaded as zip file because of data size limit. In order to implement R code, you have to first decompress the zip files.)
 
 &#x1F53A; Changes from original code in BINet
 - We don't use generator to add artificial attributes because of our purpose of trace-level approach.
