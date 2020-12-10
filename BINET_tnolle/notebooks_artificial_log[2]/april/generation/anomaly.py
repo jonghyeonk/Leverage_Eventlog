@@ -18,7 +18,6 @@ import inspect
 import sys
 
 import numpy as np
-from pprint import pprint
 
 from april.enums import Class
 from april.processmining.case import Case
@@ -50,9 +49,9 @@ class Anomaly(object):
         return n
 
     @staticmethod
-    def targets(label, num_events):
+    def targets(label, num_events, num_attributes):
         """Return targets for the anomaly."""
-        return np.zeros((num_events), dtype=int) + Class.NORMAL
+        return np.zeros((num_events, num_attributes), dtype=int) + Class.NORMAL
 
     @staticmethod
     def pretty_label(label):
@@ -109,16 +108,6 @@ class Anomaly(object):
             event.attributes = dict(
                 (a.name, f'Random {a.name} {np.random.randint(1, 3)}') for a in self.attributes)
         return event
-    
-    def generate_random_event_v2(self, act):
-        if self.activities is None:
-            raise RuntimeError('activities has not bee set.')
-        actset = [x for x in self.activities if x not in act]
-        event = Event(name=f'{np.random.choice(actset)}')
-        if self.attributes is not None:
-            event.attributes = dict(
-                (a.name, f'Random {a.name} {np.random.randint(1, 3)}') for a in self.attributes)
-        return event    
 
 
 class NoneAnomaly(Anomaly):
@@ -169,11 +158,11 @@ class ReworkAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         start = label['attr']['start'] + 1
         size = label['attr']['size']
-        targets[start:start + size] = Class.REWORK
+        targets[start:start + size, 0] = Class.REWORK
         return targets
 
     @staticmethod
@@ -215,10 +204,10 @@ class SkipSequenceAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         start = label['attr']['start'] + 1
-        targets[start] = Class.SKIP
+        targets[start, 0] = Class.SKIP
         return targets
 
     @staticmethod
@@ -262,13 +251,13 @@ class LateAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         s = label['attr']['shift_from'] + 1
         e = label['attr']['shift_to'] + 1
         size = label['attr']['size']
-        targets[s] = Class.SHIFT
-        targets[e:e + size] = Class.LATE
+        targets[s, 0] = Class.SHIFT
+        targets[e:e + size, 0] = Class.LATE
         return targets
 
     @staticmethod
@@ -313,13 +302,13 @@ class EarlyAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         s = label['attr']['shift_from'] + 1
         e = label['attr']['shift_to'] + 1
         size = label['attr']['size']
-        targets[s] = Class.SHIFT
-        targets[e:e + size] = Class.EARLY
+        targets[s, 0] = Class.SHIFT
+        targets[e:e + size, 0] = Class.EARLY
         return targets
 
     @staticmethod
@@ -422,8 +411,8 @@ class AttributeAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         indices = label['attr']['index']
         attribute_indices = label['attr']['attribute_index']
         for i, j in zip(indices, attribute_indices):
@@ -439,9 +428,8 @@ class AttributeAnomaly(Anomaly):
         return f'{name} {affected} at {index} was {original}'
 
 
-    
 class ReplaceAnomaly(Anomaly):
-    """Replace n activities by different ones coming from the case. """
+    """Replace n events by random events coming from the case."""
 
     def __init__(self, max_replacements=1):
         self.max_replacements = max_replacements
@@ -450,15 +438,16 @@ class ReplaceAnomaly(Anomaly):
     def apply_to_case(self, case):
         if len(case) <= 2:
             return NoneAnomaly().apply_to_case(case)
-        num_replacements = np.random.randint(1, min(len(case) - 1, self.max_replacements) + 1)
+
+        num_replacements = np.random.randint(1, min(int(len(case) / 3), self.max_replacements) + 1)
         places = sorted(np.random.choice(np.arange(len(case) - 1, step=2), num_replacements, replace=False))
+
         t = case.events
+
         replaced = [t[i].json for i in places]
-        
-        
+
         for place in places:
-            act = case.trace
-            t = t[:place] + [self.generate_random_event_v2( act[place:place+1] )] + t[place + 1:]
+            t = t[:place] + [self.generate_random_event()] + t[place + 1:]
         case.events = t
 
         case.attributes['label'] = dict(
@@ -472,10 +461,11 @@ class ReplaceAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         for i in label['attr']['indices']:
-            targets[i + 1] = Class.REPLACE
+            targets[i + 1, 0] = Class.REPLACE
+            targets[i + 1, 1:] = Class.ATTRIBUTE
         return targets
 
     @staticmethod
@@ -484,6 +474,7 @@ class ReplaceAnomaly(Anomaly):
         replaced = ', '.join([e['name'] for e in label['attr']['replaced']])
         indices = ', '.join([str(i + 1) for i in label['attr']['indices']])
         return f'{name} {replaced} at {indices}'
+
 
 class InsertAnomaly(Anomaly):
     """Add n random events."""
@@ -515,10 +506,11 @@ class InsertAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         for i in label['attr']['indices']:
-            targets[i + 1] = Class.INSERT
+            targets[i + 1, 0] = Class.INSERT
+            targets[i + 1, 1:] = Class.ATTRIBUTE
         return targets
 
     @staticmethod
@@ -561,10 +553,10 @@ class SkipAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         for i in label['attr']['indices']:
-            targets[i + 1] = Class.SKIP
+            targets[i + 1, 0] = Class.SKIP
         return targets
 
     @staticmethod
@@ -619,13 +611,13 @@ class SkipAndInsertAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events):
-        targets = Anomaly.targets(label, num_events)
+    def targets(label, num_events, num_attributes):
+        targets = Anomaly.targets(label, num_events, num_attributes)
         for i in label['attr']['inserts']:
-            targets[i + 1] = Class.INSERT
+            targets[i + 1, 0] = Class.INSERT
             targets[i + 1, 1:] = Class.ATTRIBUTE
         for i in label['attr']['skips']:
-            targets[i + 1] = Class.SKIP
+            targets[i + 1, 0] = Class.SKIP
         return targets
 
     @staticmethod
@@ -640,11 +632,11 @@ class SkipAndInsertAnomaly(Anomaly):
 ANOMALIES = dict((s[:-7], anomaly) for s, anomaly in inspect.getmembers(sys.modules[__name__], inspect.isclass))
 
 
-def label_to_targets(label, num_events):
+def label_to_targets(label, num_events, num_attributes):
     if label == 'normal':
-        return NoneAnomaly.targets(label, num_events)
+        return NoneAnomaly.targets(label, num_events, num_attributes)
     else:
-        return ANOMALIES.get(label['anomaly']).targets(label, num_events)
+        return ANOMALIES.get(label['anomaly']).targets(label, num_events, num_attributes)
 
 
 def prettify_label(label):

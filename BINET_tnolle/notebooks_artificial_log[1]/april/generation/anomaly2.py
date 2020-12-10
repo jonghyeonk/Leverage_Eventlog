@@ -109,6 +109,16 @@ class Anomaly(object):
                 (a.name, f'Random {a.name} {np.random.randint(1, 3)}') for a in self.attributes)
         return event
 
+    def generate_random_event_v2(self, act):
+        if self.activities is None:
+            raise RuntimeError('activities has not bee set.')
+
+        actset = [x for x in self.activities if x not in act]
+        event = Event(name=f'{np.random.choice(actset)}')
+        if self.attributes is not None:
+            event.attributes = dict(
+                (a.name, f'Random {a.name} {np.random.randint(1, 3)}') for a in self.attributes)
+        return event
 
 class NoneAnomaly(Anomaly):
     """Return the case unaltered, i.e., normal."""
@@ -428,8 +438,9 @@ class AttributeAnomaly(Anomaly):
         return f'{name} {affected} at {index} was {original}'
 
 
+
 class ReplaceAnomaly(Anomaly):
-    """Replace n events by random events coming from the case."""
+    """Replace n activities by different ones coming from the case. """
 
     def __init__(self, max_replacements=1):
         self.max_replacements = max_replacements
@@ -438,16 +449,14 @@ class ReplaceAnomaly(Anomaly):
     def apply_to_case(self, case):
         if len(case) <= 2:
             return NoneAnomaly().apply_to_case(case)
-
-        num_replacements = np.random.randint(1, min(int(len(case) / 3), self.max_replacements) + 1)
+        num_replacements = np.random.randint(1, min(len(case) -1, self.max_replacements) + 1)
         places = sorted(np.random.choice(np.arange(len(case) - 1, step=2), num_replacements, replace=False))
-
         t = case.events
-
         replaced = [t[i].json for i in places]
 
         for place in places:
-            t = t[:place] + [self.generate_random_event()] + t[place + 1:]
+            act = case.trace
+            t = t[:place] + [self.generate_random_event_v2(act[place:place + 1])] + t[place + 1:]
         case.events = t
 
         case.attributes['label'] = dict(
@@ -461,11 +470,10 @@ class ReplaceAnomaly(Anomaly):
         return case
 
     @staticmethod
-    def targets(label, num_events, num_attributes):
-        targets = Anomaly.targets(label, num_events, num_attributes)
+    def targets(label, num_events):
+        targets = Anomaly.targets(label, num_events)
         for i in label['attr']['indices']:
-            targets[i + 1, 0] = Class.REPLACE
-            targets[i + 1, 1:] = Class.ATTRIBUTE
+            targets[i + 1] = Class.REPLACE
         return targets
 
     @staticmethod

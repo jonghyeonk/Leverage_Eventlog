@@ -320,7 +320,7 @@ class Dataset(object):
         num_events = event_log.max_case_len + 2
         num_attributes = event_log.num_event_attributes
         targets = np.asarray([label_to_targets(label, num_events, num_attributes) for label in labels])
-
+        # targets = np.asarray([label_to_targets(label, num_events) for label in labels])
         return targets, labels
 
     @staticmethod
